@@ -8,7 +8,7 @@
     import matplotlib.pyplot as plt
     import numpy as np
     import sfs
-    from scipy.signal import unit_impulse
+    from scipy.signal import unit_impulse, firwin
 
     # Plane wave
     npw = sfs.util.direction_vector(np.radians(-45))
@@ -26,19 +26,26 @@
 
     # Impulsive excitation
     fs = 44100
-    signal = unit_impulse(512), fs
+    #signal = unit_impulse(512), fs
+    # rather use a bandlimited Dirac, i.e. a linear-phase lowpass FIR
+    Nlp = 2**10 + 1
+    signal = firwin(numtaps=Nlp,
+                    cutoff=fs/2*20/22.05,
+                    window=('kaiser', 10),
+                    pass_zero='lowpass',
+                    scale=True, fs=fs), fs
 
     # Circular loudspeaker array
     N = 32  # number of loudspeakers
     R = 1.5  # radius
     array = sfs.array.circular(N, R)
 
-    grid = sfs.util.xyz_grid([-2, 2], [-2, 2], 0, spacing=0.02)
+    grid = sfs.util.xyz_grid([-2, 2], [-2, 2], 0, spacing=0.01)
 
     def plot(d, selection, secondary_source, t=0):
         p = sfs.td.synthesize(d, selection, array, secondary_source, grid=grid,
-                              observation_time=t)
-        sfs.plot2d.level(p, grid)
+                              observation_time=t+((Nlp-1)/2)/fs)
+        sfs.plot2d.level(p, grid, cmap='Blues')
         sfs.plot2d.loudspeakers(array.x, array.n,
                                 selection * array.a, size=0.15)
 
@@ -189,6 +196,7 @@ def point_25d(x0, n0, xs, xref=[0, 0, 0], c=None):
 
         delays, weights, selection, secondary_source = \
             sfs.td.wfs.point_25d(array.x, array.n, xs)
+        weights *= 4*np.pi*rs  # normalize
         d = sfs.td.wfs.driving_signals(delays, weights, signal)
         plot(d, selection, secondary_source, t=ts)
 
@@ -283,6 +291,7 @@ def point_25d_legacy(x0, n0, xs, xref=[0, 0, 0], c=None):
 
         delays, weights, selection, secondary_source = \
             sfs.td.wfs.point_25d(array.x, array.n, xs)
+        weights *= 4*np.pi*rs  # normalize
         d = sfs.td.wfs.driving_signals(delays, weights, signal)
         plot(d, selection, secondary_source, t=ts)
 
@@ -365,6 +374,7 @@ def focused_25d(x0, n0, xs, ns, xref=[0, 0, 0], c=None):
 
         delays, weights, selection, secondary_source = \
             sfs.td.wfs.focused_25d(array.x, array.n, xf, nf)
+        weights *= 4*np.pi*rf  # normalize
         d = sfs.td.wfs.driving_signals(delays, weights, signal)
         plot(d, selection, secondary_source, t=tf)
 
