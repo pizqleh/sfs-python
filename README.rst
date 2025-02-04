@@ -2,7 +2,7 @@ Sound Field Synthesis (SFS) Toolbox for Python
 ==============================================
 
 A Python library for creating numerical simulations of sound field synthesis
-methods like SWEET, Wave Field Synthesis (WFS) or Near-Field Compensated Higher Order
+methods like Wave Field Synthesis (WFS) or Near-Field Compensated Higher Order
 Ambisonics (NFC-HOA).
 
 Documentation:
